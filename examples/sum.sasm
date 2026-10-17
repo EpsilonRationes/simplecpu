@@ -1,0 +1,10 @@
+; Сумма двух чисел
+; scpu-in:  @0xF0 "A в ячейку 0xF0: "
+; scpu-in:  @0xF1 "B: "
+; scpu-out: "A+B = {@0xF2:s}  (без знака {@0xF2:u}, hex {@0xF2:x})"
+
+        r0 <- @0xF0
+        r1 <- @0xF1
+        r0 <- r0 + r1
+        @0xF2 <- r0
+HLT:    rc <- @HLT

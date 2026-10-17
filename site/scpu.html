@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simple CPU</title>
+<meta charset="UTF-8"/>
+<meta name="description" content="Простой процессор. Учебный стенд.">
+<link rel="stylesheet" type="text/css" href="/static/css/app.css?v=1"/>
+<link rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" href="/static/css/app_dark.css?v=1"/>
+<link rel="stylesheet" type="text/css" href="/static/css/hl-vs.min.css"/>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/highlight.pack.js"></script>
+<link rel="icon" type="image/png" href="/static/img/favicons/16x16_2.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/static/img/favicons/32x32_2.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/static/img/favicons/16x16_2.png" sizes="16x16">
+<link rel="apple-touch-icon" href="/static/img/favicons/180x180_2.png" sizes="180x180">
+<link rel="manifest" href="/static/manifest.json">
+
+        <script>
+            let sasm_result = "OK";
+            let sasm_bin = "1cfe:1;";
+            let sasm_text = `r3 <- @0xfe`;
+        </script>
+    </head>
+    <body>
+        
+
+
+<div id="no-cookies-warning" style="display: none;">
+Этот сайт не работает без&nbsp;<a href="https://en.wikipedia.org/wiki/HTTP_cookie" target="_blank" rel="noopener noreferrer">печенек</a>.&nbsp;<a href="https://www.whatismybrowser.com/guides/how-to-enable-cookies/" target="_blank" rel="noopener noreferrer">Смиритесь</a>.
+</div>
+<noscript>
+    <div id="nojs-warning">
+        <div>Без JavaScript ничего работать не будет, увы...</div>
+    </div>
+</noscript>
+
+<div id="header">
+    <div id="logo">Simple CPU</div>
+    <div>
+    <img id="bender" src="/static/img/bender_2c.png" alt="" />
+    </div>
+</div>
+
+        <div id="content">
+            <div id="src-editor" class="editor language-mipsasm"></div>
+            <div id="scpu_area">
+                <div id="scpu_vm_area"></div>
+                <div id="scpu_control_area"></div>
+            </div>
+            <div id="scpu_help">
+<h1 class="fixed">Исполнение программ простым процессором</h1>
+    <p class="fixed">
+        Если программа успешно переведена с языка ассемблера в двоичный код, она с помощью магии переносится в память включившегося простого процессора и может быть выполнена либо в пошаговом режиме (с помощью кнопки "Шаг!"), либо в автоматическом (с помощью кнопки "Старт!"). Регулятор скорости под кнопкой "Старт!" позволяет ускорить процесс в случае необходимости.
+    </p>
+    <p class="fixed">
+        Для изменения значения, содержащегося в регистре или ячейке памяти, достаточно щелкнуть по ним и ввести новое значение (для ввода в шестнадцатеричной системе нужно использовать префикс 0x).
+    </p>
+
+</div>
+
+        </div>
+        <div id="scpu-error">
+            <div id="scpu-error-title"></div>
+            <div id="scpu-error-message"></div>
+        </div>
+        <div id="footer">
+    <div>
+        <a href="mailto:avg@itmo.ru">Алексей Гирик</a> &copy; 2020
+    </div>
+    <div>
+        This work is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">CC BY-NC-SA 3.0</a>
+    </div>  
+</div>
+
+
+    </body>
+    <script type="module" src="/static/js/editor.js?v=1"></script>
+    <script src="/static/js/scpu.min.js?v=5"></script>
+    <script src="/static/js/app.js?v=1"></script>
+</html>

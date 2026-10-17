@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simple CPU</title>
+<meta charset="UTF-8"/>
+<meta name="description" content="Простой процессор. Учебный стенд.">
+<link rel="stylesheet" type="text/css" href="/static/css/app.css?v=1"/>
+<link rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" href="/static/css/app_dark.css?v=1"/>
+<link rel="stylesheet" type="text/css" href="/static/css/hl-vs.min.css"/>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/highlight.pack.js"></script>
+<link rel="icon" type="image/png" href="/static/img/favicons/16x16_2.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/static/img/favicons/32x32_2.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/static/img/favicons/16x16_2.png" sizes="16x16">
+<link rel="apple-touch-icon" href="/static/img/favicons/180x180_2.png" sizes="180x180">
+<link rel="manifest" href="/static/manifest.json">
+
+        <script>
+            let sasm_text = ``;
+        </script>
+    </head>
+    <body>
+        
+
+
+<div id="no-cookies-warning" style="display: none;">
+Этот сайт не работает без&nbsp;<a href="https://en.wikipedia.org/wiki/HTTP_cookie" target="_blank" rel="noopener noreferrer">печенек</a>.&nbsp;<a href="https://www.whatismybrowser.com/guides/how-to-enable-cookies/" target="_blank" rel="noopener noreferrer">Смиритесь</a>.
+</div>
+<noscript>
+    <div id="nojs-warning">
+        <div>Без JavaScript ничего работать не будет, увы...</div>
+    </div>
+</noscript>
+
+<div id="header">
+    <div id="logo">Simple CPU</div>
+    <div>
+    <img id="bender" src="/static/img/bender_1c.png" alt="" />
+    </div>
+</div>
+
+        <div id="content">
+            <div id="src-editor" class="editor language-mipsasm"></div>
+            <div id="errors_area" class="errors_area"></div>
+            <div id="sasm_control_area">
+                <button type="submit" id="submit-btn" class="button">Собрать!</button>
+            </div>
+            <div id="sasm_help">
+<h1 class="fixed">Простой процессор</h1>
+    <p class="fixed">
+        Простой процессор &ndash; модель 8-разрядного процессора, снабженного 256-байтным банком памяти. Основное назначение простого процессора &ndash; работа учебным стендом для наглядного объяснения принципов функционирования вычислительной техники, архитектуры процессоров, ассемблирования, выборки и исполнения команд. Неосновное назначение &ndash; причинение боли и страдания студентам-бездельникам и тем, кто наивно полагает, что в XXI веке программирование в машинных кодах больше никем и нигде не используется (спойлер: используется). Простой процессор &ndash; это предельно упрощенная и лишенная возможности микропрограммирования и ввода-вывода <a href="https://books.ifmo.ru/file/pdf/761.pdf" target="_blank" rel="noopener noreferrer">базовая ЭВМ</a>.
+    </p>
+    <p class="fixed">
+        Простой процессор имеет 4 регистра общего назначения (РОНа) &ndash; <span class="scpu-reg">R0</span>, <span class="scpu-reg">R1</span>, <span class="scpu-reg">R2</span> и <span class="scpu-reg">R3</span>, регистр флагов <span class="scpu-reg">RF</span> и регистр-указатель команд <span class="scpu-reg">RC</span>. Простой процессор может непосредственно адресовать 256 байтов памяти, в которой размещаются команды и данные. Простой процессор оперирует 8-разрядными целыми числами со знаком (для представления отрицательных чисел используется дополнительный код). Числа могут быть записаны в десятичной системе счисления, шестнадцатеричной (с префиксом 0x, например, 0xAB) или двоичной (с префиксом 0b, например, 0b10101011).
+    </p>
+    <p class="fixed">
+        Три малдших бита в регистре <span class="scpu-reg">RF</span> являются арифметическими флагами, остальные биты не используются. Бит Z (самый младший бит) устанавливается в 1 в случае, если результат последней арифметической команды равен 0, в противном случае бит Z сбрасывается в 0. Бит S (бит с порядковым номером 1) устанавливается в 1 в случае, если результат последней арифметической команды имеет в старшем бите единицу (то есть может рассматриваться как отрицательное число), в противном случае бит S сбрасывается в 0. Бит C (бит с порядковым номером 2) устанавливается в 1 в случае, если результат последней арифметической команды не поместился в разрядную сетку, и за её пределы был выполнен перенос, в противном случае бит C сбрасывается в 0. Проверить значения флагов в регистре <span class="scpu-reg">RF</span> можно с помощью команд условного перехода.
+    </p>
+    <p class="fixed">
+        Регистр-указатель команд <span class="scpu-reg">RC</span> содержит адрес следующей исполняемой команды. Команды перехода фактически заносят в этот регистр адрес ячейки памяти, откуда нужно продолжить выборку команд. После "включения" простого процессора все регистры содержат нули и выполнение программы начинается с адреса 0.
+    </p>
+<h1 class="fixed">Простой ассемблер для простого процессора</h1>
+    <p class="fixed">
+        Простой ассемблер позволяет перейти от программирования в машинных кодах к символической записи команд, то есть, например, вместо записи команды в машинном коде <span class="scpu-instr">18 fe</span> (или в двоичном представлении <span class="scpu-instr">00011000 11111110</span>) записать её мнемоникой <span class="sasm-code">r2 &lt;- @0xfe</span>. Каждая команда может быть снабжена меткой (идентификатором, после которого стоит двоеточие, например, <span class="sasm-code">BEGIN:</span>). Метка должна располагаться перед командой ассемблера в той же строке, что и команда.
+    </p>
+    <p class="fixed">
+        Правильно:
+        <code class="code-ok">
+            BEGIN:      r2 <- @0xfe     ; читаем текущее значение
+        </code>
+    </p>
+    <p class="fixed">
+        Неправильно:
+        <code class="code-notok">
+            BEGIN:                            
+                        r2 <- @0xfe     ; читаем текущее значение
+        </code>
+    </p>
+
+    <p class="fixed">
+        Простой ассемблер не различает верхний и нижний регистр символов, поэтому 0xFE и 0xfe &ndash; одно и то же число, <span class="scpu-reg">r0</span> и <span class="scpu-reg">R0</span> &ndash; один и тот же регистр, <span class="sasm-code">LOOP:</span> и <span class="sasm-code">loop:</span> &ndash; одна и та же метка.
+    </p>
+    
+    <p class="fixed">
+        Простым ассемблером поддерживаются однострочные комментарии, они начинаются с символа <span class="sasm-code">;</span> и продолжаются до конца строки. Простой ассемблер игнорирует пробельные символы и комментарии.
+    </p>    
+<h1 class="fixed">Система команд простого процессора</h1>
+    <table class="fixed" style="width:100%">
+      <tr>
+        <th>Мнемоника</th>
+        <th>Двоичное представление</th>
+        <th>Команда</th>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- Rss</span></td>
+        <td><span class="scpu-instr">0000ddss</span></td>
+        <td>Пересылка данных из регистра в регистр</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- @aaaaaaaa</span></td>
+        <td><span class="scpu-instr">0001dd?? aaaaaaaa</span></td>
+        <td>Пересылка данных из памяти в регистр</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">@aaaaaaaa &lt;- Rss </span></td>
+        <td><span class="scpu-instr">0010??ss aaaaaaaa</span></td>
+        <td>Пересылка данных из регистра в память</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;-&nbsp; nnnnnnnn</span></td>
+        <td><span class="scpu-instr">0011dd?? nnnnnnnn</span></td>
+        <td>Запись в регистр константы</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- Rdd + Rss</span></td>
+        <td><span class="scpu-instr">0100ddss</span></td>
+        <td>Сложение</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- Rdd &minus; Rss</span></td>
+        <td><span class="scpu-instr">0101ddss</span></td>
+        <td>Вычитание</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- Rdd * Rss</span></td>
+        <td><span class="scpu-instr">0110ddss</span></td>
+        <td>Умножение</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- Rdd / Rss</span></td>
+        <td><span class="scpu-instr">0111ddss</span></td>
+        <td>Деление (беззнаковое)</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">RF &lt;- Rdd ~ Rss</span></td>
+        <td><span class="scpu-instr">1000ddss</span></td>
+        <td>Сравнение</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">RC &lt;- @aaaaaaaa (C)</span></td>
+        <td><span class="scpu-instr">1001???? aaaaaaaa</span></td>
+        <td>Переход, если перенос</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">RC &lt;- @aaaaaaaa (S)</span></td>
+        <td><span class="scpu-instr">1010???? aaaaaaaa</span></td>
+        <td>Переход, если знак</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">RC &lt;- @aaaaaaaa (Z)</span></td>
+        <td><span class="scpu-instr">1011???? aaaaaaaa</span></td>
+        <td>Переход, если ноль</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">RC &lt;- @aaaaaaaa</span></td>
+        <td><span class="scpu-instr">1100???? aaaaaaaa</span></td>
+        <td>Безусловный переход</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- ?</span></td>
+        <td><span class="scpu-instr">1101dd??</span></td>
+        <td>Запись случайного числа в регистр</td>
+      </tr>
+      <tr>
+        <td><span class="sasm-code">Rdd &lt;- Rss++</span></td>
+        <td><span class="scpu-instr">1110ddss</span></td>
+        <td>Инкремент</td>
+      </tr>
+    </table>
+
+    <p class="fixed">
+        Команды простого процессора могут быть поделены на несколько категорий:
+        <ul class="fixed">
+            <li>команды пересылки данных</li>
+            <li>арифметические команды</li>
+            <li>команды передачи управления</li>
+        </ul>
+    </p>
+
+    <p class="fixed">
+        Арифметические операции с данными возможны только в том случае, если данные находятся в регистрах. Все арифметические команды действуют по одному принципу: данные берутся из регистра-назначения (первый операнд, в команде обозначаемый как <span class="sasm-code">Rdd</span>), затем &ndash; из регистра-источника (второй операнд, в командах обозначаемый как <span class="sasm-code">Rss</span>), над ними производится действие, определяемое кодом операции, после чего результат записывается в регистр назначения и в регистре флагов устанавливаются соответствующие флаги. Команда сравнения, фактически работающая как команда вычитания, отличается от последней тем, что результат не сохраняется, но флаги в регистре флагов устанавливаются. Необходимо также отметить, что команда деления в простом процессоре работает с числами без знака.
+    </p>
+   
+    <p class="fixed">
+        Команды пересылки данных позволяют загрузить данные из памяти в РОНы для обработки и записать результаты из РОНов обратно в память. Команда инкремента <span class="sasm-code">Rdd &lt;- Rss++</span>, формально относящаяся к командам пересылки данных, похожа на копирование данных из регистра в регистр, но позволяет при этом записать в регистр назначения увеличенное на единицу значение регистра-источника.
+    </p>
+    
+    <p class="fixed">    
+        В простом процессоре нет отдельной команды NOP (No OPeration), однако в таком качестве можно использовать запись из регистра в тот же регистр, например, <span class="sasm-code">r0 &lt;- r0</span>. Отдельной команды для останова процессора (HLT, HaLT) также не предусмотрено, для этого можно применять команду безусловного перехода на тот же адрес:
+        <code class="code-ok">
+            HLT:      rc <- @HLT     ; стоп
+        </code>        
+    </p>
+</div>
+
+        </div>
+        <div id="footer">
+    <div>
+        <a href="mailto:avg@itmo.ru">Алексей Гирик</a> &copy; 2020
+    </div>
+    <div>
+        This work is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">CC BY-NC-SA 3.0</a>
+    </div>  
+</div>
+
+
+    </body>
+    <script type="module" src="/static/js/editor.js?v=1"></script>
+    <script src="/static/js/app.js?v=1"></script>
+    <script>
+        function add_error_msg(m) {
+            let errors_area = document.querySelector('#errors_area');
+            // sasm_messages: [ [msg_type, line_num, msg] ...]
+            // msg_type: 0 - taunt, 1 - error, 2 - warning, 3 - info
+            var line_style = ""; //m[0] !== 0 ? 'style="font-weight: bold;"' : '';
+            
+            errors_area.innerHTML += `<div class="error_line" ${line_style}>${m[2]}</div>`;
+            
+        }
+        
+        function clear_all_error_msgs() {
+            let errors_area = document.querySelector('#errors_area');
+            errors_area.innerHTML = "";
+        }
+        // assemble the code
+        $('#submit-btn').click(() => {
+            // if there were errors from previous submit, remove them
+            clear_all_error_msgs()
+
+            // empty editor?
+            if ($('#src-editor').text().length == 0) {
+                add_error_msg([1, 0, 'Маловато будет!']);
+                return;
+            }
+            
+            // program too large?
+            if ($('#src-editor').text().length > 4096) {    // TODO: move to app settings
+                add_error_msg([1, 0, 'Многовато будет!']);
+                return;
+            }
+            
+            // disable submit button until request is served
+            $('#submit-btn').prop('disabled', true);
+            $.post("/assemble", { text : $('#src-editor').text() })
+                .done( (data) => {
+                    try {
+                        let res = JSON.parse(data);
+                        if (res.hasOwnProperty('sasm_result')) {
+                            // check result
+                            console.log("res = " + res.sasm_text);
+                            window.res = res;
+                            if (res.sasm_result === 'OK' && res.sasm_bin.length !== 0) {
+                                
+                                // redirect to scpu vm page
+                                window.location.href = '/scpu';
+                            }
+                        } else {
+                            // malformed result
+                            console.error("No 'sasm_result' in " + res);
+                            add_error_msg([1, 0, 'Сервер прислал какую-то ерунду...'])
+                        }
+                        if (res.hasOwnProperty('sasm_messages')) {
+                            // there are errors, show them
+                            for (var msg of res.sasm_messages) {
+                                add_error_msg(msg);
+                            }
+                        }
+                    }
+                    catch (e) {
+                        // parse error?
+                        console.error("Failed to parse: " + e);
+                        add_error_msg([1, 0, 'Сервер прислал какую-то ерунду...'])
+                    }
+                })
+                .fail( () => {
+                    // connection or server error
+                    console.error("Failed to connect to server");
+                    add_error_msg([1, 0, 'Сервер куда-то пропал! Вы сервер не видели?'])
+                })
+                .always( () => {
+                    // enable submit button again
+                    $('#submit-btn').prop('disabled', false);
+                });
+        });
+    </script>
+</html>
